@@ -264,3 +264,25 @@ async def get_fiat_rate_satoshis(currency: str) -> float:
 
 async def fiat_amount_as_satoshis(amount: float, currency: str) -> int:
     return int(amount * (await get_fiat_rate_satoshis(currency)))
+
+
+async def get_rate(currency_from: str, currency_to: str) -> float:
+    if currency_from == "sat":
+        rate_from = 1
+    elif currency_from == "msat":
+        rate_from = 0.001
+    elif currency_from == "btc":
+        rate_from = 100000000
+    else:
+        rate_from = await get_fiat_rate_satoshis(currency_from)
+
+    if currency_to == "sat":
+        rate_to = 1
+    elif currency_to == "msat":
+        rate_to = 0.001
+    elif currency_to == "btc":
+        rate_to = 100000000
+    else:
+        rate_to = await get_fiat_rate_satoshis(currency_to)
+
+    return rate_from / rate_to
