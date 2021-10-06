@@ -61,6 +61,9 @@
             </q-popup-edit>
           </q-btn>
         </h3>
+        <h4 class="q-my-none" v-if="g.localCurrency != 'sat'">
+                {% raw %}{{ formattedValueLocal(balance) }}{% endraw %}
+        </h4>
       </q-card-section>
       <div class="row q-pb-md q-px-md q-col-gutter-md gt-sm">
         <div class="col">

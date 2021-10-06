@@ -166,6 +166,13 @@ new Vue({
             sortable: true
           },
           {
+            name: 'local',
+            align: 'right',
+            label: 'Amount (local)',
+            field: 'local',
+            sortable: true
+          },
+          {
             name: 'fee',
             align: 'right',
             label: 'Fee (m' + LNBITS_DENOMINATION + ')',
@@ -217,6 +224,9 @@ new Vue({
     }
   },
   methods: {
+    formattedValueLocal: function (from_sats) {
+      return LNbits.utils.formatCurrency(from_sats * this.g.localCurrencyRate, this.g.localCurrency)
+    },
     paymentTableRowKey: function (row) {
       return row.payment_hash + row.amount
     },
@@ -239,7 +249,7 @@ new Vue({
       this.receive.paymentHash = null
       this.receive.data.amount = null
       this.receive.data.memo = null
-      this.receive.unit = 'sat'
+      this.receive.unit = this.g.localCurrency
       this.receive.units = this.g.localCurrencies
       this.receive.paymentChecker = null
       this.receive.minMax = [0, 2100000000000000]
