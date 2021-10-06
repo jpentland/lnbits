@@ -307,6 +307,7 @@ window.windowMixin = {
         wallet: null,
         payments: [],
         allowedThemes: null
+        localCurrencies: [],
       }
     }
   },
@@ -358,6 +359,15 @@ window.windowMixin = {
     if (window.wallet) {
       this.g.wallet = Object.freeze(window.LNbits.map.wallet(window.wallet))
     }
+
+    LNbits.api
+      .request('GET', '/api/v1/currencies')
+      .then(response => {
+        this.g.localCurrencies = ['sat', ...response.data]
+      })
+      .catch(err => {
+        LNbits.utils.notifyApiError(err)
+      })
     if (window.extensions) {
       var user = this.g.user
       this.g.extensions = Object.freeze(
