@@ -11,7 +11,11 @@ from typing import Dict, Union
 from lnbits import bolt11, lnurl
 from lnbits.bolt11 import Invoice
 from lnbits.decorators import api_check_wallet_key, api_validate_post_request
-from lnbits.utils.exchange_rates import currencies, fiat_amount_as_satoshis
+from lnbits.utils.exchange_rates import (
+        currencies,
+        fiat_amount_as_satoshis,
+        get_rate,
+)
 
 from .. import core_app, db
 from ..crud import get_payments, save_balance_check, update_wallet
@@ -557,3 +561,20 @@ async def api_perform_lnurlauth():
 @core_app.route("/api/v1/currencies", methods=["GET"])
 async def api_list_currencies_available():
     return jsonify(list(currencies.keys()))
+
+
+@core_app.route("/api/v1/rates", methods=["GET"])
+@api_check_wallet_key("admin")
+async def api_convert_currencies():
+    currency_from = request.args.get("from")
+    currency_to = request.args.get("to")
+    if not currency_to or not currency_from:
+        return (
+            jsonify({"message": "failed to get parameters"}),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
+
+    return jsonify({
+        "currency": currency_to,
+        "rate": await get_rate(currency_from, currency_to)
+    })
