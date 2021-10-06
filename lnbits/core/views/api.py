@@ -25,7 +25,11 @@ from lnbits.decorators import (
 )
 from lnbits.helpers import url_for
 from lnbits.requestvars import g
-from lnbits.utils.exchange_rates import currencies, fiat_amount_as_satoshis
+from lnbits.utils.exchange_rates import (
+        currencies,
+        fiat_amount_as_satoshis,
+        get_rate,
+)
 
 from .. import core_app, db
 from ..crud import (
@@ -496,3 +500,14 @@ async def api_perform_lnurlauth(callback: str):
 @core_app.get("/api/v1/currencies")
 async def api_list_currencies_available():
     return list(currencies.keys())
+
+
+# TODO: Restrict by requiring a valid user ID
+@core_app.get("/api/v1/rates/{cfrom}/{cto}")
+async def api_convert_currencies(cfrom, cto):
+    rate = await get_rate(cfrom, cto)
+    return {
+        "from": cfrom,
+        "to": cto,
+        "rate": f"{rate:.10f}"
+    }
