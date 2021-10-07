@@ -400,6 +400,9 @@ window.windowMixin = {
     if (currency) {
       this.setLocalCurrency(currency)
     }
+    setInterval(() => {
+      this.setLocalCurrency(this.g.localCurrency)
+    }, 600000)
 
     if (window.extensions) {
       var user = this.g.user
