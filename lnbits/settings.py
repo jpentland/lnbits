@@ -33,6 +33,7 @@ LNBITS_ADMIN_EXTENSIONS: List[str] = env.list("LNBITS_ADMIN_EXTENSIONS", default
 LNBITS_DISABLED_EXTENSIONS: List[str] = env.list(
     "LNBITS_DISABLED_EXTENSIONS", default=[], subcast=str
 )
+LNBITS_SHOW_FIAT = env.bool("LNBITS_SHOW_FIAT", default="false")
 
 LNBITS_AD_SPACE = env.list("LNBITS_AD_SPACE", default=[])
 LNBITS_HIDE_API = env.bool("LNBITS_HIDE_API", default=False)

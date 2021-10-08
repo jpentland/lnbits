@@ -168,6 +168,7 @@ def template_renderer(additional_folders: List = []) -> Jinja2Templates:
     t.env.globals["SITE_TAGLINE"] = settings.LNBITS_SITE_TAGLINE
     t.env.globals["SITE_DESCRIPTION"] = settings.LNBITS_SITE_DESCRIPTION
     t.env.globals["LNBITS_THEME_OPTIONS"] = settings.LNBITS_THEME_OPTIONS
+    t.env.globals["LNBITS_SHOW_FIAT"] = settings.LNBITS_SHOW_FIAT
     t.env.globals["LNBITS_VERSION"] = settings.LNBITS_COMMIT
     t.env.globals["EXTENSIONS"] = get_valid_extensions()
 
