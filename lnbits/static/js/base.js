@@ -387,22 +387,24 @@ window.windowMixin = {
       this.g.wallet = Object.freeze(window.LNbits.map.wallet(window.wallet))
     }
 
-    LNbits.api
-      .request('GET', '/api/v1/currencies')
-      .then(response => {
-        this.g.localCurrencies = ['sat', ...response.data]
-      })
-      .catch(err => {
-        LNbits.utils.notifyApiError(err)
-      })
+    if (window.showFiat) {
+      LNbits.api
+        .request('GET', '/api/v1/currencies')
+        .then(response => {
+          this.g.localCurrencies = ['sat', ...response.data]
+        })
+        .catch(err => {
+          LNbits.utils.notifyApiError(err)
+        })
 
-    currency = this.$q.localStorage.getItem('lnbits.localCurrency')
-    if (currency) {
-      this.setLocalCurrency(currency)
+      currency = this.$q.localStorage.getItem('lnbits.localCurrency')
+      if (currency) {
+        this.setLocalCurrency(currency)
+      }
+      setInterval(() => {
+        this.setLocalCurrency(this.g.localCurrency)
+      }, 600000)
     }
-    setInterval(() => {
-      this.setLocalCurrency(this.g.localCurrency)
-    }, 600000)
 
     if (window.extensions) {
       var user = this.g.user
