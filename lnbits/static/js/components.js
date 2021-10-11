@@ -23,7 +23,9 @@ Vue.component('lnbits-wallet-list', {
       activeBalance: [],
       showForm: false,
       walletName: '',
-      LNBITS_DENOMINATION: LNBITS_DENOMINATION
+      LNBITS_DENOMINATION: LNBITS_DENOMINATION,
+      localCurrencyRate: 1,
+      localCurrency: "sat"
     }
   },
   template: `
@@ -45,7 +47,8 @@ Vue.component('lnbits-wallet-list', {
         <q-item-section>
           <q-item-label lines="1">{{ wallet.name }}</q-item-label>
           <q-item-label v-if="LNBITS_DENOMINATION != 'sats'" caption>{{ parseFloat(String(wallet.live_fsat).replaceAll(",", "")) / 100  }} {{ LNBITS_DENOMINATION }}</q-item-label>
-          <q-item-label v-else caption>{{ wallet.live_fsat }} {{ LNBITS_DENOMINATION }}</q-item-label>
+          <q-item-label v-else-if="localCurrency=='sat'" caption>{{ wallet.live_fsat }} {{ LNBITS_DENOMINATION }</q-item-label>
+          <q-item-label v-else caption>{{ formattedValueLocal(wallet.sat) }}</q-item-label>
         </q-item-section>
         <q-item-section side v-show="activeWallet && activeWallet.id === wallet.id">
           <q-icon name="chevron_right" color="grey-5" size="md"></q-icon>
@@ -90,6 +93,13 @@ Vue.component('lnbits-wallet-list', {
     },
     updateWalletBalance: function (payload) {
       this.activeBalance = payload
+    },
+    setLocalCurrency: function({currency, rate}) {
+      this.localCurrency = currency
+      this.localCurrencyRate = rate
+    },
+    formattedValueLocal: function (from_sats) {
+      return LNbits.utils.formatCurrency(from_sats * this.localCurrencyRate, this.localCurrency)
     }
   },
   created: function () {
@@ -100,6 +110,7 @@ Vue.component('lnbits-wallet-list', {
       this.activeWallet = LNbits.map.wallet(window.wallet)
     }
     EventHub.$on('update-wallet-balance', this.updateWalletBalance)
+    EventHub.$on('update-local-currency', this.setLocalCurrency)
   }
 })
 
