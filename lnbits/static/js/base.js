@@ -348,6 +348,7 @@ window.windowMixin = {
           this.g.localCurrencyRate = response.data.rate
           this.g.localCurrency = currency
           this.$q.localStorage.set('lnbits.localCurrency', this.g.localCurrency)
+          EventHub.$emit("update-local-currency", {currency: currency, rate: response.data.rate})
         })
       }
     },
