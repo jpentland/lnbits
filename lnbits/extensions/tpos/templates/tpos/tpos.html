@@ -200,10 +200,20 @@
           dialog.dismissMsg()
         }, 3000)
       },
+      startNFCScan: function () {
+        if ('NDEFReader' in window) {
+          this.ndef = new NDEFReader()
+          this.ndef.scan().then(() => {
+            this.ndef.addEventListener("reading", ({message, serialNumber}) => {
+                    this.onNFCRead(message)
+            })
+          })
+        }
+      },
       showInvoice: function () {
         var self = this
         var dialog = this.invoiceDialog
-
+        this.startNFCScan()
         axios
           .post('/tpos/api/v1/tposs/' + this.tposId + '/invoices/', {
             amount: this.sat
@@ -250,6 +260,28 @@
           self.exchangeRate =
             response.data.data['BTC' + self.currency][self.currency]
         })
+      },
+      onNFCRead: function (message) {
+        for (const record of message.records) {
+          if (record.recordType == "text") {
+              const textDecoder = new TextDecoder()
+              const decoded = textDecoder.decode(record.data).toLowerCase()
+              if (decoded.startsWith("lnurl1")) {
+                  this.handleLNURL(decoded)
+              }
+          }
+        }
+      },
+      handleLNURL: function(request) {
+          if (this.invoiceDialog.data) {
+            axios
+                .post('/tpos/api/v1/tposs/' + this.tposId + '/lnurlw', {
+                    payment_request: this.invoiceDialog.data.payment_request,
+                    lnurl: request,
+                  }).catch(function (error) {
+                LNbits.utils.notifyApiError(error)
+              })
+          }
       }
     },
     created: function () {
