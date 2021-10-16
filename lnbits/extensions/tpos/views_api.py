@@ -1,9 +1,14 @@
+import httpx
+import json
+
 from quart import g, jsonify, request
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.services import create_invoice, check_invoice_status
 from lnbits.decorators import api_check_wallet_key, api_validate_post_request
+from lnbits import lnurl
 
 from . import tpos_ext
 from .crud import create_tpos, get_tpos, get_tposs, delete_tpos
@@ -99,3 +104,72 @@ async def api_tpos_check_invoice(tpos_id, payment_hash):
         return jsonify({"paid": True}), HTTPStatus.OK
 
     return jsonify({"paid": False}), HTTPStatus.OK
+
+
+@tpos_ext.route("/api/v1/tposs/<tpos_id>/lnurlw", methods=["POST"])
+@api_validate_post_request(
+        schema={
+            "payment_request": {"type": "string", "empty": False, "required": True},
+            "lnurl": {"type": "string", "empty": False, "required": True}
+        }
+)
+async def api_tpos_lnurl(tpos_id):
+    tpos = await get_tpos(tpos_id)
+    if not tpos:
+        return jsonify({"message": "TPoS does not exist."}), HTTPStatus.NOT_FOUND
+
+    try:
+        url = lnurl.decode(g.data["lnurl"])
+        domain = urlparse(url).netloc
+    except Exception:
+        return jsonify({"message": "invalid lnurl"}, HTTPStatus.BAD_REQUEST)
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, timeout=5)
+        if r.is_error:
+            return (
+                jsonify({"domain": domain, "message": "failed to get parameters"}),
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+
+    try:
+        data = json.loads(r.text)
+    except json.decoder.JSONDecodeError:
+        return (
+            jsonify(
+                {
+                    "domain": domain,
+                    "message": f"got invalid response '{r.text[:200]}'",
+                }
+            ),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
+
+    tag = data["tag"]
+    if tag == "withdrawRequest":
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.get(
+                    data["callback"],
+                    params={
+                        "pr": g.data["payment_request"],
+                        "k1": data["k1"],
+                    },
+                    timeout=10,
+                )
+                if r.is_error:
+                    lnurl_response = r.text
+                else:
+                    print(f"RESPONSE: {r.text}")
+                    resp = json.loads(r.text)
+                    if resp["status"] != "OK":
+                        lnurl_response = resp["reason"]
+                    else:
+                        lnurl_response = True
+
+            except (httpx.ConnectError, httpx.RequestError):
+                lnurl_response = False
+
+            return jsonify({"lnurl_response": lnurl_response})
+
+    return jsonify({"message": "Not a withdraw request"}, HTTPStatus.SERVICE_UNAVAILABLE)
